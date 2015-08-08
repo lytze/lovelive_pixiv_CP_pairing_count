@@ -7,10 +7,10 @@ for (i in 1:9) for (j in 1:9) {
     score_mat[ i, j ] <- score_mat[ i, j ] / mean(idol_mean_score[ c(i, j) ])
 }
 
-score_mat_tune <- score_mat
-score_mat_tune <- ifelse(score_mat_tune < quantile(score_mat_tune, 0.6),
-                         0, 0.75 * score_mat_tune - quantile(score_mat_tune, 0.6))
-net <- graph_from_adjacency_matrix(score_mat_tune, mode = 'undirected', weighted = T)
+score_mat_less <- score_mat
+score_mat_less <- ifelse(score_mat < quantile(score_mat, 0.6),
+                         0, score_mat)
+net <- graph_from_adjacency_matrix(score_mat_less, mode = 'undirected', weighted = T)
 V(net)$color <- c('#c3d825', '#ffea00', '#a22041',
                   '#ee7800', '#c0c6c9', '#192f60',
                   '#2ca9e1', '#f09199', '#aa4c8f')
@@ -21,8 +21,18 @@ V(net)$label.cex <- 0.5
 V(net)$label.color <- c('#000000', '#000000', '#ffffff',
                         '#ffffff', '#000000', '#ffffff',
                         '#ffffff', '#ffffff', '#ffffff')
-E(net)$width <- E(net)$weight * 10
-E(net)$color <- '#7F7F7F88'
+E(net)$width <- E(net)$weight * 8
+E(net)$color <- paste('#7F7F7F',
+                      floor(10 + 
+                        (E(net)$weight - min(E(net)$weight)) * 
+                            (89 / (max(E(net)$weight) - min(E(net)$weight)))),
+                      sep = '')
+E(net)$label <- sapply(attr(E(net), 'vnames'), function(e) {
+    ft <- strsplit(e, '\\|')[[1]]
+    score_mat[ft[2], ft[1]] * mean(idol_mean_score)
+}) %>% round
+E(net)$label.cex <- 0.4
+E(net)$label.color <- 'black'
 
 pdf('plot.pdf', family = 'Japan1GothicBBB')
 plot(net, layout = layout_in_circle(net))
