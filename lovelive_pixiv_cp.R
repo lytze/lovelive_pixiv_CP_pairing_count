@@ -29,7 +29,7 @@ options(RCurlOptions = list(
 )
 curl <- getCurlHandle()
 curlSetOpt(
-    cookiejar = 'cookies.txt' ,
+cookiejar = '~/cookies.txt' ,
     httpheader = header,
     followlocation = TRUE ,
     autoreferer = TRUE ,
@@ -46,7 +46,6 @@ tmp <- postForm('https://www.secure.pixiv.net/login.php', .params = params, curl
                 .opt = list(cookiefile = ''), style = 'POST')
 
 ## Get the lovelive! tagged works' url
-url_works <- character(0)
 for (page_n in 1:1000) {
     cat('Getting page:', page_n, 'in 1000\n')
     url <- paste('http://www.pixiv.net/search.php',
@@ -56,10 +55,10 @@ for (page_n in 1:1000) {
     document <- htmlTreeParse(getURL(url, curl = curl), useInternalNodes = T)
     works <- xpathSApply(document, '//li[@class="image-item "]/*[2]', xmlAttrs)
     url_works <- union(url_works, paste('http://www.pixiv.net', works, sep = ''))
-    cat(length(url_works), '\n')
+    cat(length(url_works), '\n', file = 'works_url.txt', append = T)
 }
-## Clean the urls to rule out duplicates (due to newly coming works)
-url_works <- url_works[!duplicated(url_works)]
+## Read works' url from temp file
+url_works <- readLines('works_url.txt')
 ## Get tags for each work
 i <- 1
 works_num <- length(url_works)
@@ -81,6 +80,6 @@ for (url_work in url_works) {
                 score_mat[pair[1], pair[2]] <<- score_mat[pair[1], pair[2]] + 1
                 score_mat[pair[2], pair[1]] <<- score_mat[pair[2], pair[1]] + 1
             })
-        write.table(score_mat, '~/Desktop/score_mat.txt')
+        write.table(score_mat, 'score_mat.txt')
     }
 }
